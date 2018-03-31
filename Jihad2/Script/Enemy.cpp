@@ -8,9 +8,10 @@ Enemy::Enemy(int speed_, Wall& wall_)
 	invincible(false),
 	h_speed(speed_),
 	v_speed(0),
+	g(1),
 	wall(wall_),
 	t(0),
-	anim_coef(5)
+	anim_coef(6)
 {}
 
 
@@ -26,7 +27,7 @@ Thumb::Thumb(Wall& wall)
 
 
 void Thumb::move() {
-	pos.moveBy(-speed, 0);
+	pos.moveBy(-h_speed, 0);
 	if ((++t / anim_coef) >= 6) t = 0;
 
 	auto& arr = wall.getChips();
@@ -39,7 +40,7 @@ void Thumb::move() {
 					invincible = true;
 					touched_wall_pos.set(i ,j);
 				}
-				else changeState(State::Climbing), Println(L"climbed");
+				else changeState(State::Climbing);
 			}
 		}
 	}
@@ -76,9 +77,7 @@ void Thumb::update() {
 }
 
 void Thumb::draw() const {
-
-	for (const auto& elm : collider.get()) elm.draw(Palette::Red);
-
+	
 	int index;
 	switch (state)
 	{

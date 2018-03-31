@@ -33,9 +33,9 @@ void Fortress::update() {
 }
 
 
-void Fortress::draw() {
+void Fortress::draw() const {
 
 	TextureAsset(L"ashi").draw(pos);
 	TextureAsset(L"close").rotateAt(rotation_point, angle).draw(pos);
-	rotation_point.asPoint().draw();
+
 }

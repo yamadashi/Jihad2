@@ -25,7 +25,7 @@ public:
 	~Fortress() { bullets.clear(); }
 
 	void update();
-	void draw();
+	void draw() const;
 	list<shared_ptr<Bullet>>& getBullets() { return bullets; }
 
 };
