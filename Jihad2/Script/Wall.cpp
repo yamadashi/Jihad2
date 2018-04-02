@@ -58,10 +58,17 @@ void Wall::adjust(int row, int col) {
 }
 
 void Wall::draw() const {
+	int i = 0, j = 0;
 	for (const auto& arr : chips) {
+		j = 0;
 		for (const auto& elm : arr) {
-			if (elm.has_value()) elm.value().draw();
+			if (elm.has_value()) {
+				elm.value().draw();
+				PutText(i, L",", j).from(elm.value().getPos());
+			}
+			j++;
 		}
+		i++;
 	}
 }
 
