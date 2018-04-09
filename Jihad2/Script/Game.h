@@ -5,13 +5,12 @@
 # include "Enemy.h"
 
 
-
 class Game : public MyScene {
 private:
-	Collider ground;
-	Fortress fortress;
-	Wall wall;
 	std::list<std::unique_ptr<Enemy>> enemies;
+	Collider ground;
+	Wall wall;
+	Fortress fortress;
 
 public:
 	Game();

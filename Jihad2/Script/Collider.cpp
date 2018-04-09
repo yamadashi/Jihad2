@@ -11,11 +11,17 @@ bool Collider::intersects(const Collider& other) const
 	return false;
 }
 
+void Collider::add(const Rect& arg) {
+	colliders.emplace_back(arg);
+	if (!collider.has_value()) collider.emplace(colliders.at(0));
+}
+
 void Collider::update() {
 
 	if (pre_pos == parent_pos) return;
 
-	for (auto&& elm : colliders) elm.moveBy(parent_pos - pre_pos);
+	delta.set(parent_pos - pre_pos);
+	for (auto&& elm : colliders) elm.moveBy(delta);
 
 	pre_pos = parent_pos;
 }
