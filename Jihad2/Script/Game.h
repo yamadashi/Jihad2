@@ -11,6 +11,7 @@ private:
 	Collider ground;
 	Wall wall;
 	Fortress fortress;
+	Camera2D camera;
 
 public:
 	Game();

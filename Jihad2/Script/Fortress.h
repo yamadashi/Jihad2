@@ -15,9 +15,12 @@ private:
 	const double max_angle, min_angle;
 	const Vec2 rotation_point;
 	const Vec2 muzzle_offset;
+	Vec2 muzzle_point;
 	const double rotation_velo;
 	const int size;
+	float power;
 	const float max_power;
+	Vec2 clickPos;
 
 	Collider collider;
 	list<unique_ptr<Bullet>> bullets;

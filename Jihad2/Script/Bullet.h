@@ -7,6 +7,19 @@
 
 using namespace std;
 
+
+class Explosion : ymds::Event {
+private:
+	int t;
+
+public:
+	Explosion();
+	void update() override;
+	void draw() const override;
+};
+
+
+
 struct PointF {
 	PointF(float x_, float y_) : x(x_), y(y_) {}
 	PointF(const Point& point) : x((float)point.x), y((float)point.y) {}
@@ -22,7 +35,7 @@ protected:
 	PointF posF;
 	float v_x, v_y;
 	const float g;
-	bool touched;
+	bool dead;
 	static const int size;
 
 	Collider collider;
@@ -32,6 +45,7 @@ protected:
 
 	void move();
 	bool intersects() const;
+	bool isOutOfView() const;
 	void onTouch();
 
 public:
@@ -39,8 +53,8 @@ public:
 	virtual ~Bullet() = default;
 	virtual void update() = 0;
 	virtual void draw() const = 0;
-	bool hasTouched() const { return touched; }
-	auto getTrajectory() -> void;
+	bool isDead() const { return dead; }
+	vector<Point> getTrajectory() const;
 };
 
 

@@ -24,13 +24,22 @@ void Game::update()
 
 	enemies.remove_if([](const std::unique_ptr<Enemy>& enemy) { return enemy->isDead(); });
 
+	ymds::EventManager::get().update();
+
+	camera.update();
 }
 
 
 void Game::draw() const
 {
-	for (const auto& elm : ground.get()) elm.draw();
-	fortress.draw();
-	wall.draw();
-	for (const auto& enemy : enemies) enemy->draw();
+	{
+		const auto t = camera.createTransformer();
+
+		for (const auto& elm : ground.get()) elm.draw();
+		fortress.draw();
+		wall.draw();
+		for (const auto& enemy : enemies) enemy->draw();
+
+		ymds::EventManager::get().draw();
+	}
 }
