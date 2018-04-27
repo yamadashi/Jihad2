@@ -3,19 +3,21 @@
 # include "Fortress.h"
 # include "Wall.h"
 # include "Enemy.h"
+# include "MyCamera.h"
 
 
 class Game : public MyScene {
 private:
-	std::list<std::unique_ptr<Enemy>> enemies;
 	Collider ground;
 	Wall wall;
 	Fortress fortress;
-	Camera2D camera;
+	EnemyManager enemyManager;
+	MyCamera camera;
 
 public:
 	Game();
 	~Game();
+	std::map<int, String>::iterator unchi;
 
 	void update() override;
 	void draw() const override;

@@ -2,7 +2,7 @@
 
 
 
-Fortress::Fortress(list<unique_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_)
+Fortress::Fortress(Wall& wall_, Collider& ground_)
 	:Damageable(100),
 	pos(50, 450),
 	angle(0),
@@ -17,7 +17,8 @@ Fortress::Fortress(list<unique_ptr<Enemy>>& enemies_, Wall& wall_, Collider& gro
 	power(5),
 	max_power(50),
 	clickPos(Mouse::PosF()),
-	enemies(enemies_),
+	fireReady(false),
+	update_func(&Fortress::normalUpdate),
 	wall(wall_),
 	ground(ground_)
 {
@@ -26,50 +27,67 @@ Fortress::Fortress(list<unique_ptr<Enemy>>& enemies_, Wall& wall_, Collider& gro
 
 void Fortress::rotate()
 {
+	static bool clicked = false;
+
 	if (Input::MouseL.clicked)
 	{
 		clickPos.set(Mouse::PosF());
+		clicked = true;
 	}
-	if (Input::MouseL.pressed)
+	if (Input::MouseL.released) {
+		clicked = false;
+		return;
+	}
+
+	if (clicked && Input::MouseL.pressed)
 	{
 		Circle(clickPos, 6).draw(Palette::Orange);
 		const auto&& diff = Mouse::PosF() - clickPos;
 		const double length = diff.length();
-		if (length < 20.0) return;
+		if (length < 20.0) {
+			fireReady = false;
+			return;
+		}
+		fireReady = true;
 		power = length * 0.25f;
 		if (power > max_power) power = max_power;
 		angle = -atan2f(diff.x, diff.y) - PiF/4;
 		muzzle_point = (muzzle_offset - (pos + rotation_point)).rotated(angle) + (pos + rotation_point);
-	
-		PutText(angle).from(0, 0);
-
-
-		/*if (Input::KeyDown.pressed && angle < max_angle) {
-			angle += rotation_velo;
-			muzzle_point = (muzzle_offset - (pos + rotation_point)).rotated(angle) + (pos + rotation_point);
-		}
-		if (Input::KeyUp.pressed && angle > min_angle) {
-			angle -= rotation_velo;
-			muzzle_point = (muzzle_offset - (pos + rotation_point)).rotated(angle) + (pos + rotation_point);
-		}*/
 	}
 }
 
 
 void Fortress::fire()
 {
-	if (Input::MouseL.released) {
-		bullets.emplace_back(new Eye(muzzle_point.asPoint(), power, angle + angle_offset, enemies, wall, ground));
+	if (fireReady && Input::MouseL.released) {
+		bullets.emplace_back(new Eye(muzzle_point.asPoint(), power, angle + angle_offset, *enemies, wall, ground));
 		power = 5;
+		update_func = &Fortress::resetUpdate;
+		fireReady = false;
+	}
+}
+
+void Fortress::normalUpdate()
+{
+	rotate();
+	fire();
+}
+
+void Fortress::resetUpdate()
+{
+	static int t = 0;
+	const float delta = -0.01*(angle/fabsf(angle));
+	angle += delta;
+	if (fabsf(angle) < delta) {
 		angle = 0;
+		update_func = &Fortress::normalUpdate;
+		t = 0;
 	}
 }
 
 void Fortress::update()
 {
-	rotate();
-	fire();
-
+	update_func(*this);
 	for (auto&& bullet : bullets) bullet->update();
 	bullets.remove_if([](const unique_ptr<Bullet>& bullet) { return bullet->isDead(); });
 }
@@ -81,8 +99,8 @@ void Fortress::draw() const {
 	PutText(hp).from(pos);
 	for (const auto& bullet : bullets) bullet->draw();
 	
-	if (Input::MouseL.pressed) {
-		for (const auto& elm : Eye(muzzle_point.asPoint(), power, angle + angle_offset, enemies, wall, ground).getTrajectory()) {
+	if (fireReady && Input::MouseL.pressed) {
+		for (const auto& elm : Eye(muzzle_point.asPoint(), power, angle + angle_offset, *enemies, wall, ground).getTrajectory()) {
 			Circle(elm.x, elm.y, 3).draw();
 		}
 	}

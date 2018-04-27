@@ -28,7 +28,7 @@ FileRegisterer& TextureRegisterer::fileRegister(const FilePath& directory, const
 	for (const auto& elm : filePaths) {
 		String&& extension = FileSystem::Extension(elm);
 		if (extension == L"png" || extension == L"jpeg" || extension == L"jpg")
-			TextureAsset::Register(FileSystem::BaseName(elm), elm, TextureDesc::Mipped);
+			TextureAsset::Register(FileSystem::BaseName(elm), elm, TextureDesc::Unmipped);
 	}
 	return *this;
 }
@@ -54,7 +54,7 @@ FileRegisterer& AssetRegisterer::fileRegister(const FilePath& directory, const b
 	for (const auto& elm : filePaths) {
 		String&& extension = FileSystem::Extension(elm);
 		if (extension == L"png" || extension == L"jpeg" || extension == L"jpg") 
-			TextureAsset::Register(FileSystem::BaseName(elm), elm, TextureDesc::Mipped);
+			TextureAsset::Register(FileSystem::BaseName(elm), elm, TextureDesc::Unmipped);
 		else if (extension == L"mp3" || extension == L"wav")
 			SoundAsset::Register(FileSystem::BaseName(elm), elm);
 	}

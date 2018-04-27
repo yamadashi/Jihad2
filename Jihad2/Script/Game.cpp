@@ -4,9 +4,12 @@
 
 Game::Game()
 	:ground(Point(0, 0)),
-	fortress(enemies, wall, ground)
+	fortress(wall, ground),
+	enemyManager(wall, ground, { fortress.getCollider(), fortress }),
+	camera()
 {
-	ground.add(Rect(0, 700, 1500, 100));
+	fortress.setEneies(enemyManager.getEnemies());
+	ground.add(Rect(-100, 700, 5000, 900));
 }
 
 
@@ -17,14 +20,10 @@ Game::~Game()
 
 void Game::update()
 {
-	if (Input::KeyEnter.clicked) enemies.emplace_back(new Thumb(wall, ground, { fortress.getCollider(), fortress }));
-
 	fortress.update();
-	for (auto&& enemy : enemies) enemy->update();
 
-	enemies.remove_if([](const std::unique_ptr<Enemy>& enemy) { return enemy->isDead(); });
-
-	ymds::EventManager::get().update();
+	enemyManager.update();
+	//ymds::EventManager::get().update();
 
 	camera.update();
 }
@@ -32,14 +31,19 @@ void Game::update()
 
 void Game::draw() const
 {
+	static const auto& texture = TextureAsset(L"garakuta");
+	static const double aspect_ratio = 1 / 0.3281;
+
+	TextureAsset(L"background").draw();
 	{
 		const auto t = camera.createTransformer();
 
-		for (const auto& elm : ground.get()) elm.draw();
+		TextureAsset(L"garakuta").scale(aspect_ratio).draw(-100, 700 - texture.height*aspect_ratio);
+		ground.getOne()->draw();
 		fortress.draw();
 		wall.draw();
-		for (const auto& enemy : enemies) enemy->draw();
+		enemyManager.draw();
 
-		ymds::EventManager::get().draw();
+		//ymds::EventManager::get().draw();
 	}
 }

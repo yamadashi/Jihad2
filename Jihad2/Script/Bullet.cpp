@@ -11,7 +11,7 @@ void Explosion::update() {}
 void Explosion::draw() const {}
 
 
-Bullet::Bullet(const Point& pos_, float speed, float angle, list<unique_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_)
+Bullet::Bullet(const Point& pos_, float speed, float angle, list<shared_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_)
 	:pos(pos_.movedBy(-size/2, -size/2)),
 	posF(pos),
 	v_x(speed*cosf(angle)),
@@ -51,13 +51,14 @@ bool Bullet::intersects() const
 }
 
 bool Bullet::isOutOfView() const {
-	if (pos.x > Window::Width() || pos.y > Window::Height()) return true;
+	if (pos.x > ground.getOne()->w || pos.y > ground.getOne()->h) return true;
 	return false;
 }
 
 void Bullet::onTouch() {
 	dead = true;
 	//ymds::EventManager::get().registerEvent();
+	//É_ÉÅÅ[ÉW
 }
 
 
@@ -81,7 +82,7 @@ vector<Point> Bullet::getTrajectory() const
 }
 
 
-Eye::Eye(const Point& pos_, float speed, float angle, list<unique_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_)
+Eye::Eye(const Point& pos_, float speed, float angle, list<shared_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_)
 	:Bullet(pos_, speed, angle, enemies_, wall_, ground_)
 {
 	collider.add(Rect(pos, size));

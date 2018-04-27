@@ -39,7 +39,7 @@ protected:
 	static const int size;
 
 	Collider collider;
-	list<unique_ptr<Enemy>>& enemies;
+	list<shared_ptr<Enemy>>& enemies;
 	Wall& wall;
 	Collider& ground;
 
@@ -49,7 +49,7 @@ protected:
 	void onTouch();
 
 public:
-	Bullet(const Point& pos_, float speed, float angle, list<unique_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_);
+	Bullet(const Point& pos_, float speed, float angle, list<shared_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_);
 	virtual ~Bullet() = default;
 	virtual void update() = 0;
 	virtual void draw() const = 0;
@@ -63,7 +63,7 @@ private:
 
 
 public:
-	Eye(const Point& pos_, float speed, float angle, list<unique_ptr<Enemy>>& enemies_, Wall&, Collider& ground_);
+	Eye(const Point& pos_, float speed, float angle, list<shared_ptr<Enemy>>& enemies_, Wall&, Collider& ground_);
 	void update() override;
 	void draw() const override;
 };

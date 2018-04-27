@@ -7,7 +7,7 @@
 void Main()
 {
 	Window::Resize(1500, 800);
-	//Graphics::SetBackground(Palette::White);
+	//Graphics::SetBackground(Palette::Skyblue);
 
 	TextureRegisterer().fileRegister(L"Files/").preload();
 	
@@ -20,3 +20,5 @@ void Main()
 		PutText(Mouse::Pos()).at(Mouse::Pos());
 	}
 }
+
+//Enemy.cpp 211
