@@ -66,6 +66,7 @@ void Wall::draw() const {
 	}
 }
 
+//(row,col)の位置に新規ブロック作成
 void Wall::extend(int row, int col) {
 	State temp = State::First;
 	if (getChips()[row + 1][col].has_value()) temp = State::UpperRight;

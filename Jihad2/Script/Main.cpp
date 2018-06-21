@@ -1,5 +1,6 @@
 ﻿
 # include "FileRegister.h"
+# include "Title.h"
 # include "Game.h"
 
 
@@ -12,6 +13,7 @@ void Main()
 	TextureRegisterer().fileRegister(L"Files/").preload();
 	
 	MySceneManager manager;
+	manager.add<Title>(SceneName::Title);
 	manager.add<Game>(SceneName::Game);
 	
 	while (System::Update())
@@ -20,5 +22,3 @@ void Main()
 		PutText(Mouse::Pos()).at(Mouse::Pos());
 	}
 }
-
-//Enemy.cpp 211
