@@ -1,13 +1,13 @@
 #pragma once
 #include "Scene.h"
 
-class Explain : public MyScene {
+class Result : public MyScene {
 private:
 
 public:
-	Explain() = default;
-	~Explain() = default;
-
+	Result() = default;
+	~Result() = default;
 	void update() override;
 	void draw() const override;
+
 };

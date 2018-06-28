@@ -34,10 +34,13 @@ private:
 	MyCamera camera;
 	BackGround bg;
 
+	Stopwatch timer;
+	Font timeFont;
+	bool end;
+
 public:
 	Game();
 	~Game();
-	std::map<int, String>::iterator unchi;
 
 	void update() override;
 	void draw() const override;

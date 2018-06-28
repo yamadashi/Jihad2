@@ -1,14 +1,14 @@
 #include "Enemy.h"
 
 
-Enemy::Enemy(int speed_, Wall& wall_, Collider& ground_, const std::pair<Collider&, Damageable&>& fortress_, EnemyManager& manager_)
+Enemy::Enemy(int speed_, const Point& pos_, Wall& wall_, Collider& ground_, const std::pair<Collider&, Damageable&>& fortress_, EnemyManager& manager_)
 	:Damageable(5),
 	state(State::Forward),
 	wall(wall_),
 	ground(ground_),
 	fortress(fortress_),
 	manager(manager_),
-	pos(1500, 25),
+	pos(pos_),
 	collider(pos),
 	bottom(pos),
 	ground_y(700),
@@ -52,53 +52,25 @@ EnemyManager::EnemyManager(Wall & wall_, Collider & ground_, pair<Collider&, Dam
 	:wall(wall_),
 	ground(ground_),
 	fortress(fortress_),
+	timer(true),
 	wait_time(180),
 	frontPos(fortress.first.getOne().value().pos),
 	frontCol(0)
-{}
+{
+	timer.restart();
+}
 
 void EnemyManager::generate()
 {
-	if (Input::KeyEnter.clicked) enemies.emplace_back(new Thumb(wall, ground, fortress, *this));
-}
+	static int pre_s;
+	if (timer.s() - pre_s > 2) {
+		pre_s = timer.s();
+		for (int i = 0; i < 4*(1+sinf(timer.ms()*PiF/30)); i++)
+			enemies.emplace_back(new Thumb({ 1500+i*Random<int>(1,10)*15, 100 }, wall, ground, fortress, *this));
+	}
 
-//void EnemyManager::transit() {
-//
-//	auto enemy = wait_queue.dequeue();
-//	const auto& touchPos = enemy->getTouchPos();
-//	if (touchPos.has_value()) {
-//		const auto& arr = wall.getChips();
-//		int row = touchPos->x, col = touchPos->y;
-//		//同化
-//		//接触ブロックの上にブロックがあった時
-//		if (arr[row - 1][col].has_value()) {
-//
-//			enemy->changeState(Enemy::State::Assimilating);
-//			//前線を形成
-//			auto new_front = arr[row][col].value().getPos().movedBy(2 * Chip::size - 10, 0);
-//			if (new_front.x > frontPos.x) {
-//				frontPos.set(new_front);
-//			}
-//		}
-//		//登る
-//		else {
-//			enemy->changeState(Enemy::State::Climbing);
-//			enemy->setClimbed();
-//			//enemy->climb();
-//			//if (hasClimbed) {
-//			//changeState(State::Climbing);
-//			//climb();
-//			//return;
-//			//}
-//			//else {
-//			//changeState(State::None);
-//			//manager.getClimbQueue().enqueue(this);
-//			//hasClimbed = true;
-//			//return;
-//			//}
-//		}
-//	}
-//}
+	//if (Input::KeyEnter.clicked) enemies.emplace_back(new Thumb({ 1500, 100 }, wall, ground, fortress, *this));
+}
 
 void EnemyManager::update()
 {
@@ -110,19 +82,16 @@ void EnemyManager::update()
 			wait_queue.dequeue()->transit();
 			wait_t = wait_time;
 		}
-	}/*
-	else {
-		wait_t = 5;
-	}*/
+	}
 
 	for (const auto& enemy : enemies) enemy->update();
 
+	wait_queue.remove_if([](const Thumb* enemy) { return enemy->isDead(); });
 	enemies.remove_if([](const shared_ptr<Enemy>& enemy) { return enemy->isDead(); });
 }
 
 void EnemyManager::draw() const
 {
-	Circle(frontPos, 5).draw(Palette::Red);
 	for (const auto& enemy : enemies) enemy->draw();
 }
 
@@ -131,10 +100,11 @@ void EnemyManager::draw() const
 
 
 
-Thumb::Thumb(Wall& wall, Collider& ground, const std::pair<Collider&, Damageable&>& fortress, EnemyManager& manager_)
-	:Enemy(2, wall, ground, fortress, manager_),
+Thumb::Thumb(const Point& pos_, Wall& wall, Collider& ground, const std::pair<Collider&, Damageable&>& fortress, EnemyManager& manager_)
+	:Enemy(2, pos_, wall, ground, fortress, manager_),
 	touchPos(none),
 	hasClimbed(false),
+	climb_count(0),
 	climbPos(pos)
 {
 	int space = collider_space_diff;
@@ -155,6 +125,7 @@ TouchedBlock Thumb::touchesOn() {
 		return none;
 	}
 
+	if (climb_count >= 8) return none;
 	//壁との接触判定
 	auto& arr = wall.getChips();
 	for (int i = 0; i < arr.size(); i++) {
@@ -162,7 +133,7 @@ TouchedBlock Thumb::touchesOn() {
 			//壁に当たった時
 			if (arr[i][j].has_value() && collider.intersects(arr[i][j]->getCollider())) {
 				pos.x = arr[i][j].value().getPos().x + Chip::size; //壁に当たったときの補正
-				return TouchedBlock(in_place, i,j);
+				return TouchedBlock(in_place, i, j);
 			}
 		}
 	}
@@ -181,7 +152,7 @@ void Thumb::transit() {
 
 			changeState(Enemy::State::Assimilating);
 			//前線を形成
-			auto new_front = arr[row][col].value().getPos().movedBy(2 * Chip::size, 0);
+			auto new_front = arr[row][col].value().getPos().movedBy(2 * Chip::size - 10, 0);
 			if (new_front.x > manager.getFrontPos().x) {
 				manager.setFrontPos(new_front);
 				manager.setFrontCol(touchPos->y);
@@ -190,6 +161,7 @@ void Thumb::transit() {
 		//登る
 		else {
 			changeState(Enemy::State::Climbing);
+			climb_count++;
 			setClimbed();
 			climb();
 		}
@@ -238,7 +210,7 @@ void Thumb::goBack()
 	int margin = 10; //画像の位置のずれを補正（しょうがないんです）
 
 	if (pos.x > manager.getFrontPos().x+margin) {
-		pos.x = manager.getFrontPos().x;
+		pos.x = manager.getFrontPos().x+margin;
 		changeState(State::Waiting);
 		manager.wait_queue.enqueue(this);
 	}
@@ -317,7 +289,6 @@ void Thumb::update() {
 void Thumb::draw() const {
 
 	int index;
-	//for (const auto& elm : collider.get()) elm.draw(Palette::Red);
 
 	switch (state)
 	{

@@ -4,7 +4,7 @@
 
 Fortress::Fortress(Wall& wall_, Collider& ground_)
 	:Damageable(100),
-	pos(50, 450),
+	pos(50, 462),
 	angle(0),
 	angle_offset(-5*Pi/16),
 	max_angle(0.2), min_angle(-0.5),
@@ -60,7 +60,7 @@ void Fortress::rotate()
 void Fortress::fire()
 {
 	if (fireReady && Input::MouseL.released) {
-		bullets.emplace_back(new Eye(muzzle_point.asPoint(), power, angle + angle_offset, *enemies, wall, ground));
+		EventManager::get().registerEvent(new Eye(muzzle_point.asPoint(), power, angle + angle_offset, *enemies, wall, ground));
 		power = 5;
 		update_func = &Fortress::resetUpdate;
 		fireReady = false;
@@ -88,8 +88,6 @@ void Fortress::resetUpdate()
 void Fortress::update()
 {
 	update_func(*this);
-	for (auto&& bullet : bullets) bullet->update();
-	bullets.remove_if([](const unique_ptr<Bullet>& bullet) { return bullet->isDead(); });
 }
 
 void Fortress::draw() const {
@@ -97,11 +95,15 @@ void Fortress::draw() const {
 	TextureAsset(L"ashi").draw(pos);
 	TextureAsset(L"close").rotateAt(rotation_point, angle).draw(pos);
 	PutText(hp).from(pos);
-	for (const auto& bullet : bullets) bullet->draw();
 	
 	if (fireReady && Input::MouseL.pressed) {
 		for (const auto& elm : Eye(muzzle_point.asPoint(), power, angle + angle_offset, *enemies, wall, ground).getTrajectory()) {
 			Circle(elm.x, elm.y, 3).draw();
 		}
 	}
+
+	static const int hp_bar_width = 20, hp_bar_length = 100;
+	static const Point hp_bar_pos(pos.movedBy(50, 0));
+	Rect(hp_bar_pos.movedBy(-2,-2), hp_bar_length+4, hp_bar_width+4).draw(Palette::Gray);
+	Rect(hp_bar_pos, hp_bar_length*((float)hp / max_hp), hp_bar_width).draw(Palette::Red);
 }

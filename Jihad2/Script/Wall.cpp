@@ -6,7 +6,7 @@ Chip::Chip(const State& state_, const Point& pos_)
 	pos(pos_),
 	collider(pos)
 {
-	collider.add(Rect(pos, (int)size));
+	collider.add(Rect(pos, size));
 }
 
 void Chip::draw() const {

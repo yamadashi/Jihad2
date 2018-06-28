@@ -25,7 +25,6 @@ private:
 	function<void(Fortress&)> update_func; //update関数の中身
 
 	Collider collider;
-	list<unique_ptr<Bullet>> bullets;
 	Optional<list<shared_ptr<Enemy>>&> enemies; //fortressを渡すために初期化タイミングを遅らせています
 	Wall& wall;
 	Collider& ground;
@@ -38,12 +37,12 @@ private:
 
 public:
 	Fortress(Wall&, Collider& ground_);
-	~Fortress() { bullets.clear(); }
+	~Fortress() = default;
 
 	void update();
 	void draw() const;
-	list<unique_ptr<Bullet>>& getBullets() { return bullets; }
 	Collider& getCollider() { return collider; }
 	void damage(int val) override { hp -= val; }
 	void setEneies(list<shared_ptr<Enemy>>& enemies_) { enemies.emplace(enemies_); }
+	bool isDead() const { return hp <= 0; }
 };

@@ -7,7 +7,10 @@ Game::Game()
 	fortress(wall, ground),
 	enemyManager(wall, ground, { fortress.getCollider(), fortress }),
 	camera(),
-	bg()
+	bg(),
+	timer(true),
+	timeFont(25),
+	end(false)
 {
 	fortress.setEneies(enemyManager.getEnemies());
 	ground.add(Rect(-100, 700, 5000, 900));
@@ -21,24 +24,32 @@ Game::~Game()
 
 void Game::update()
 {
-	fortress.update();
+	if (!end) {
+		if (timer.min() >= 3 || Input::KeyC.clicked) {
+			end = true;
+			m_data->cleared = true;
+		}
+		if (fortress.isDead()) {
+			end = true;
+			m_data->cleared = false;
+		}
 
-	enemyManager.update();
-	//ymds::EventManager::get().update();
-	bg.update();
+		fortress.update();
 
-	camera.update();
+		enemyManager.update();
+		ymds::EventManager::get().update();
+		bg.update();
+
+		camera.update();
+	}
+	else {
+		changeScene(SceneName::Result);
+	}
 }
 
 
 void Game::draw() const
 {
-	static const auto& background = TextureAsset(L"background");
-	static const auto& garakuta = TextureAsset(L"garakuta");
-	static const auto& cloud = TextureAsset(L"bg_cloud");
-	static const auto& smoke = TextureAsset(L"bg_smoke");
-
-
 	{
 		const auto t = camera.createTransformer();
 
@@ -52,8 +63,10 @@ void Game::draw() const
 		wall.draw();
 		enemyManager.draw();
 
-		//ymds::EventManager::get().draw();
+		ymds::EventManager::get().draw();
 	}
+
+	timeFont(2 - timer.min(), L":", Pad(59 - (timer.s() % 60), { 2, L'0' })).drawAt(Window::Center().x, 20, Palette::Black);
 }
 
 

@@ -42,12 +42,14 @@ protected:
 	virtual void wait() = 0;
 
 public:
-	Enemy(int speed_, Wall& wall, Collider& ground, const std::pair<Collider&, Damageable&>& fortress, EnemyManager& manager_);
+	Enemy(int speed_, const Point& pos_, Wall& wall, Collider& ground, const std::pair<Collider&, Damageable&>& fortress, EnemyManager& manager_);
 	virtual ~Enemy() = default;
 
 	virtual void update() = 0;
 	virtual void draw() const = 0;
 	bool isDead() const { return dead; }
+	bool isAssimilating() const { return state == State::Assimilating; }
+	void kill() { dead = true; }
 	void damage(int val) override { hp -= val; }
 	const Collider& getCollider() const { return collider; }
 	const State& getState() const { return state; }
@@ -62,6 +64,7 @@ private:
 	static const int collider_space_diff;
 	TouchedBlock touchPos;
 	bool hasClimbed;
+	int climb_count;
 	Point climbPos; //climb’†‚Ì•`‰æˆÊ’u
 
 protected:
@@ -74,7 +77,7 @@ protected:
 	void wait() override;
 
 public:
-	Thumb(Wall& wall, Collider& ground, const std::pair<Collider&, Damageable&>& fortress, EnemyManager& manager_);
+	Thumb(const Point& pos_, Wall& wall, Collider& ground, const std::pair<Collider&, Damageable&>& fortress, EnemyManager& manager_);
 	~Thumb() = default;
 
 	void update() override;
@@ -83,7 +86,6 @@ public:
 	const TouchedBlock& getTouchPos() { return touchPos; }
 	void setClimbed(void) { hasClimbed = true; }
 	void transit();
-	//static bool anyoneAssimilating;
 };
 
 
@@ -93,6 +95,8 @@ private:
 	Wall& wall;
 	Collider& ground;
 	pair<Collider&, Damageable&> fortress;
+
+	Stopwatch timer;
 
 	list<shared_ptr<Enemy>> enemies;
 	Point frontPos; //‘Oü‚ÌˆÊ’u

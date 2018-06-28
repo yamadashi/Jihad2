@@ -4,8 +4,9 @@
 
 
 struct SharedData {
+	bool cleared = false;
 
-
+	void reset() {}
 };
 
 
@@ -13,7 +14,8 @@ enum class SceneName : int {
 	Title = 0,
 	Explain,
 	Game,
-	Result
+	Result,
+	Exit
 };
 
 

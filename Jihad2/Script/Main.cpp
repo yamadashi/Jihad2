@@ -2,6 +2,8 @@
 # include "FileRegister.h"
 # include "Title.h"
 # include "Game.h"
+# include "Explain.h"
+# include "Result.h"
 
 
 
@@ -15,10 +17,13 @@ void Main()
 	MySceneManager manager;
 	manager.add<Title>(SceneName::Title);
 	manager.add<Game>(SceneName::Game);
+	manager.add<Explain>(SceneName::Explain);
+	manager.add<Result>(SceneName::Result);
 	
+	Eye::setExplosionGIF(L"Files/bullet/eye_exp.gif");
+
 	while (System::Update())
 	{
 		manager.updateAndDraw();
-		PutText(Mouse::Pos()).at(Mouse::Pos());
 	}
 }
