@@ -37,6 +37,7 @@ private:
 	Stopwatch timer;
 	Font timeFont;
 	bool end;
+	int timeLimit; //•ª
 
 public:
 	Game();

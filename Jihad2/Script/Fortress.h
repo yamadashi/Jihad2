@@ -23,6 +23,7 @@ private:
 	Vec2 clickPos;
 	bool fireReady;
 	function<void(Fortress&)> update_func; //update関数の中身
+	int hp_bar_show_time;
 
 	Collider collider;
 	Optional<list<shared_ptr<Enemy>>&> enemies; //fortressを渡すために初期化タイミングを遅らせています
@@ -34,6 +35,7 @@ private:
 	void charge(); //非同期にするかも
 	void normalUpdate(); //通常時のupdate関数
 	void resetUpdate(); //復帰時のupdate関数
+	void onDamaged();
 
 public:
 	Fortress(Wall&, Collider& ground_);
@@ -42,7 +44,7 @@ public:
 	void update();
 	void draw() const;
 	Collider& getCollider() { return collider; }
-	void damage(int val) override { hp -= val; }
+	void damage(int val) override { hp -= val; onDamaged(); }
 	void setEneies(list<shared_ptr<Enemy>>& enemies_) { enemies.emplace(enemies_); }
 	bool isDead() const { return hp <= 0; }
 };

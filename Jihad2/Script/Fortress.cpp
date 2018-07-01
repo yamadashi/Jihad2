@@ -85,9 +85,15 @@ void Fortress::resetUpdate()
 	}
 }
 
+void Fortress::onDamaged() {
+	hp_bar_show_time = 150;
+}
+
+
 void Fortress::update()
 {
 	update_func(*this);
+	if (hp_bar_show_time > 0) hp_bar_show_time--;
 }
 
 void Fortress::draw() const {
@@ -96,14 +102,19 @@ void Fortress::draw() const {
 	TextureAsset(L"close").rotateAt(rotation_point, angle).draw(pos);
 	PutText(hp).from(pos);
 	
+	//‹O“¹‚ð•\Ž¦
 	if (fireReady && Input::MouseL.pressed) {
 		for (const auto& elm : Eye(muzzle_point.asPoint(), power, angle + angle_offset, *enemies, wall, ground).getTrajectory()) {
-			Circle(elm.x, elm.y, 3).draw();
+			Circle(elm.x, elm.y, 3).draw(Palette::Red);
 		}
 	}
 
+	//HPƒo[
 	static const int hp_bar_width = 20, hp_bar_length = 100;
-	static const Point hp_bar_pos(pos.movedBy(50, 0));
-	Rect(hp_bar_pos.movedBy(-2,-2), hp_bar_length+4, hp_bar_width+4).draw(Palette::Gray);
-	Rect(hp_bar_pos, hp_bar_length*((float)hp / max_hp), hp_bar_width).draw(Palette::Red);
+	static const Point hp_bar_pos(pos.movedBy(60, -55));
+	
+	if (hp_bar_show_time > 0) {
+		Rect(hp_bar_pos.movedBy(-2, -2), hp_bar_length + 4, hp_bar_width + 4).draw(Palette::Gray);
+		Rect(hp_bar_pos, hp_bar_length*((float)hp / max_hp), hp_bar_width).draw(Palette::Red);
+	}
 }

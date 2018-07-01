@@ -3,9 +3,10 @@
 
 class Result : public MyScene {
 private:
+	const Font font;
 
 public:
-	Result() = default;
+	Result();
 	~Result() = default;
 	void update() override;
 	void draw() const override;

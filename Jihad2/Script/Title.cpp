@@ -45,7 +45,6 @@ void Title::draw() const {
 		TextureAsset(L"titleBG").draw(position);
 	}
 
-	//TFont(L"‚¶‚Í‚ ‚Ç!!").drawAt(Window::Center().movedBy(0, -150));
 	TextureAsset(L"logo").drawAt(Window::Center().movedBy(0, -210));
 	TextureAsset(logo_sub_handler).scale(logo_sub_scale).drawAt(Window::Center().movedBy(0, -25));
 

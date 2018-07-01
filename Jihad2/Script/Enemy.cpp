@@ -1,8 +1,8 @@
 #include "Enemy.h"
 
 
-Enemy::Enemy(int speed_, const Point& pos_, Wall& wall_, Collider& ground_, const std::pair<Collider&, Damageable&>& fortress_, EnemyManager& manager_)
-	:Damageable(5),
+Enemy::Enemy(int hp_, int speed_, const Point& pos_, Wall& wall_, Collider& ground_, const std::pair<Collider&, Damageable&>& fortress_, EnemyManager& manager_)
+	:Damageable(hp_),
 	state(State::Forward),
 	wall(wall_),
 	ground(ground_),
@@ -69,14 +69,14 @@ void EnemyManager::generate()
 			enemies.emplace_back(new Thumb({ 1500+i*Random<int>(1,10)*15, 100 }, wall, ground, fortress, *this));
 	}
 
-	//if (Input::KeyEnter.clicked) enemies.emplace_back(new Thumb({ 1500, 100 }, wall, ground, fortress, *this));
+	if (Input::KeyEnter.clicked) enemies.emplace_back(new Thumb({ 300, 100 }, wall, ground, fortress, *this));
 }
 
 void EnemyManager::update()
 {
 	generate();
 	
-	static int wait_t = wait_time;
+	static int wait_t = 0;//wait_time;
 	if (!wait_queue.empty()) {
 		if (wait_t-- <= 0) {
 			wait_queue.dequeue()->transit();
@@ -87,7 +87,7 @@ void EnemyManager::update()
 	for (const auto& enemy : enemies) enemy->update();
 
 	wait_queue.remove_if([](const Thumb* enemy) { return enemy->isDead(); });
-	enemies.remove_if([](const shared_ptr<Enemy>& enemy) { return enemy->isDead(); });
+	enemies.remove_if([](const shared_ptr<Enemy>& enemy) { return enemy->isToErase(); });
 }
 
 void EnemyManager::draw() const
@@ -101,9 +101,10 @@ void EnemyManager::draw() const
 
 
 Thumb::Thumb(const Point& pos_, Wall& wall, Collider& ground, const std::pair<Collider&, Damageable&>& fortress, EnemyManager& manager_)
-	:Enemy(2, pos_, wall, ground, fortress, manager_),
+	:Enemy(1, 2, pos_, wall, ground, fortress, manager_),
 	touchPos(none),
 	hasClimbed(false),
+	strength(3),
 	climb_count(0),
 	climbPos(pos)
 {

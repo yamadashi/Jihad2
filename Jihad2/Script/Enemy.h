@@ -26,7 +26,8 @@ protected:
 	Collider collider;
 	Collider bottom;
 	int ground_y; //’n–Ê‚ÌˆÊ’u
-	bool dead;
+	bool dead; //€–S(‚½‚¾‚µÁ‹‚Í‚µ‚È‚¢)
+	bool toErase; //Á‹‚·‚é
 	int h_speed, v_speed;
 	static const int g;
 	int t; //•`‰æ—p•Ï”
@@ -42,12 +43,13 @@ protected:
 	virtual void wait() = 0;
 
 public:
-	Enemy(int speed_, const Point& pos_, Wall& wall, Collider& ground, const std::pair<Collider&, Damageable&>& fortress, EnemyManager& manager_);
+	Enemy(int hp_, int speed_, const Point& pos_, Wall& wall, Collider& ground, const std::pair<Collider&, Damageable&>& fortress, EnemyManager& manager_);
 	virtual ~Enemy() = default;
 
 	virtual void update() = 0;
 	virtual void draw() const = 0;
 	bool isDead() const { return dead; }
+	bool isToErase() { return toErase; }
 	bool isAssimilating() const { return state == State::Assimilating; }
 	void kill() { dead = true; }
 	void damage(int val) override { hp -= val; }
@@ -64,6 +66,7 @@ private:
 	static const int collider_space_diff;
 	TouchedBlock touchPos;
 	bool hasClimbed;
+	int strength;
 	int climb_count;
 	Point climbPos; //climb’†‚Ì•`‰æˆÊ’u
 

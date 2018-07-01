@@ -10,7 +10,8 @@ Game::Game()
 	bg(),
 	timer(true),
 	timeFont(25),
-	end(false)
+	end(false),
+	timeLimit(5)
 {
 	fortress.setEneies(enemyManager.getEnemies());
 	ground.add(Rect(-100, 700, 5000, 900));
@@ -25,7 +26,7 @@ Game::~Game()
 void Game::update()
 {
 	if (!end) {
-		if (timer.min() >= 3 || Input::KeyC.clicked) {
+		if (timer.min() >= timeLimit || Input::KeyC.clicked) {
 			end = true;
 			m_data->cleared = true;
 		}
@@ -66,7 +67,7 @@ void Game::draw() const
 		ymds::EventManager::get().draw();
 	}
 
-	timeFont(2 - timer.min(), L":", Pad(59 - (timer.s() % 60), { 2, L'0' })).drawAt(Window::Center().x, 20, Palette::Black);
+	timeFont(timeLimit-1 - timer.min(), L":", Pad(59 - (timer.s() % 60), { 2, L'0' })).drawAt(Window::Center().x, 20, Palette::Black);
 }
 
 
