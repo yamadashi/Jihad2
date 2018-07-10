@@ -1,7 +1,7 @@
 #include "Explain.h"
 
 void Explain::update() {
-	if (Input::KeyEnter.clicked) changeScene(SceneName::Title);
+	if (Input::KeyEnter.clicked) changeScene(SceneName::Tutorial);
 }
 
 void Explain::draw() const {

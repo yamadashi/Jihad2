@@ -15,6 +15,7 @@ enum class SceneName : int {
 	Explain,
 	Game,
 	Result,
+	Tutorial,
 	Exit
 };
 

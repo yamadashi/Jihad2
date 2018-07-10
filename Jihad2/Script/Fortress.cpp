@@ -17,7 +17,13 @@ Fortress::Fortress(Wall& wall_, Collider& ground_)
 	power(5),
 	max_power(50),
 	clickPos(Mouse::PosF()),
+	pressedKey(nullptr),
 	fireReady(false),
+	charged(true),
+	charge_t(0),
+	charge_wait_time(480),
+	mouth_open(false),
+	wink_t(0),
 	update_func(&Fortress::normalUpdate),
 	wall(wall_),
 	ground(ground_)
@@ -29,17 +35,27 @@ void Fortress::rotate()
 {
 	static bool clicked = false;
 
+	
 	if (Input::MouseL.clicked)
 	{
 		clickPos.set(Mouse::PosF());
 		clicked = true;
+		pressedKey = &Input::MouseL;
 	}
-	if (Input::MouseL.released) {
+	else if (Input::MouseR.clicked)
+	{
+		clickPos.set(Mouse::PosF());
+		clicked = true;
+		pressedKey = &Input::MouseR;
+	}
+
+
+	if (pressedKey != nullptr && pressedKey->released) {
 		clicked = false;
 		return;
 	}
 
-	if (clicked && Input::MouseL.pressed)
+	if (clicked && pressedKey->pressed)
 	{
 		Circle(clickPos, 6).draw(Palette::Orange);
 		const auto&& diff = Mouse::PosF() - clickPos;
@@ -59,17 +75,49 @@ void Fortress::rotate()
 
 void Fortress::fire()
 {
-	if (fireReady && Input::MouseL.released) {
-		EventManager::get().registerEvent(new Eye(muzzle_point.asPoint(), power, angle + angle_offset, *enemies, wall, ground));
-		power = 5;
-		update_func = &Fortress::resetUpdate;
-		fireReady = false;
+	if (pressedKey != nullptr && pressedKey->released) {
+
+		//–Ú
+		if (*pressedKey == Input::MouseL) {
+			if (!charged || !fireReady) return;
+
+			EventManager::get().registerEvent(new Eye(muzzle_point.asPoint(), power, angle + angle_offset, *enemies, wall, ground));
+			power = 5;
+			mouth_open = true;
+			update_func = &Fortress::resetUpdate;
+			fireReady = false;
+			charged = false;
+			charge_t = 0;
+		}
+		//á‚
+		else if (*pressedKey == Input::MouseR) {
+			if (!fireReady) return;
+
+			EventManager::get().registerEvent(new Sputum(muzzle_point.asPoint(), power, angle + angle_offset, *enemies, wall, ground));
+			power = 5;
+			mouth_open = true;
+			update_func = &Fortress::resetUpdate;
+			fireReady = false;
+			charge_t = 0;
+		}
+
+		pressedKey = nullptr;
+	}
+}
+
+void Fortress::charge()
+{
+	if (charged) return;
+
+	if (++charge_t >= charge_wait_time) {
+		charged = true;
 	}
 }
 
 void Fortress::normalUpdate()
 {
 	rotate();
+	charge();
 	fire();
 }
 
@@ -82,6 +130,7 @@ void Fortress::resetUpdate()
 		angle = 0;
 		update_func = &Fortress::normalUpdate;
 		t = 0;
+		mouth_open = false;
 	}
 }
 
@@ -94,16 +143,25 @@ void Fortress::update()
 {
 	update_func(*this);
 	if (hp_bar_show_time > 0) hp_bar_show_time--;
+	
+	if (!charged) {
+		if ((wink_t / 7) < 3) wink_t++;
+		Println(wink_t/7);
+	}
+	else {
+		if ((wink_t / 7) > 0) wink_t--;
+	}
 }
 
 void Fortress::draw() const {
 	
 	TextureAsset(L"ashi").draw(pos);
-	TextureAsset(L"close").rotateAt(rotation_point, angle).draw(pos);
-	PutText(hp).from(pos);
-	
+	TextureAsset(charged ? L"eye_filled" : L"eye_empty").rotateAt(rotation_point, angle).draw(pos);
+	if (mouth_open) TextureAsset(L"open"+ToString(wink_t/7)).rotateAt(rotation_point, angle).draw(pos);
+	else TextureAsset(L"close"+ToString(wink_t/7)).rotateAt(rotation_point, angle).draw(pos);
+
 	//‹O“¹‚ð•\Ž¦
-	if (fireReady && Input::MouseL.pressed) {
+	if (fireReady && pressedKey != nullptr && pressedKey->pressed) {
 		for (const auto& elm : Eye(muzzle_point.asPoint(), power, angle + angle_offset, *enemies, wall, ground).getTrajectory()) {
 			Circle(elm.x, elm.y, 3).draw(Palette::Red);
 		}
@@ -117,4 +175,5 @@ void Fortress::draw() const {
 		Rect(hp_bar_pos.movedBy(-2, -2), hp_bar_length + 4, hp_bar_width + 4).draw(Palette::Gray);
 		Rect(hp_bar_pos, hp_bar_length*((float)hp / max_hp), hp_bar_width).draw(Palette::Red);
 	}
+
 }

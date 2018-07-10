@@ -54,19 +54,10 @@ bool Bullet::isOutOfView() const {
 	return false;
 }
 
-
-
-Eye::Eye(const Point& pos_, float speed, float angle, list<shared_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_)
-	:Bullet(pos_, size, speed, angle, enemies_, wall_, ground_),
-	exploding(false)
-{
-	collider.add(Rect(Pos(), size));
-}
-
-vector<Point> Eye::getTrajectory() const
+vector<Point> Bullet::getTrajectory() const
 {
 	vector<Point> trajectory;
-	PointF posf(Pos().movedBy(size/2, size/2));
+	PointF posf(Pos().movedBy(Size() / 2, Size() / 2));
 	Vec2 v = Velocity();
 
 	while (v.y < 10.0f) {
@@ -75,11 +66,20 @@ vector<Point> Eye::getTrajectory() const
 
 		posf.x += v.x;
 		posf.y += v.y;
-		
+
 		trajectory.emplace_back((int)posf.x, (int)posf.y);
 	}
 
 	return trajectory;
+}
+
+
+
+Eye::Eye(const Point& pos_, float speed, float angle, list<shared_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_)
+	:Bullet(pos_, size, speed, angle, enemies_, wall_, ground_),
+	exploding(false)
+{
+	collider.add(Rect(Pos(), size));
 }
 
 void Eye::explode() {
@@ -142,7 +142,8 @@ const int Eye::size = 100;
 
 
 TinyEye::TinyEye(const Point& pos_,const Vec2& v0, float speed, float angle, list<shared_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_)
-	:Bullet(pos_, size, speed, angle, enemies_, wall_, ground_)
+	:Bullet(pos_, size, speed, angle, enemies_, wall_, ground_),
+	count(2)
 {
 	collider.add(Rect(Pos(), size));
 }
@@ -150,21 +151,24 @@ TinyEye::TinyEye(const Point& pos_,const Vec2& v0, float speed, float angle, lis
 bool TinyEye::intersects() {
 
 	for (const auto& enemy : enemies) {
+		if (count <= 0) return true;
 		if (collider.intersects(enemy->getCollider())) {
-			if (!enemy->isDead() && !enemy->isAssimilating()) enemy->kill();
-			return true;
+			if (!enemy->isDead() && !enemy->isAssimilating()) {
+				enemy->kill();
+				count--;
+			}
 		}
 	}
 
-	if (collider.intersects(ground)) return true;
+	if (collider.intersects(ground)) count -= 2;
 
 	for (const auto& arr : wall.getChips()) {
 		for (const auto& chip : arr) {
-			if (chip.has_value() && collider.intersects(chip.value().getCollider())) return true;
+			if (chip.has_value() && collider.intersects(chip.value().getCollider())) count -= 2;
 		}
 	}
 
-	return false;
+	return count <= 0;
 }
 
 void TinyEye::update() {
@@ -186,3 +190,57 @@ void TinyEye::onTouch() {
 }
 
 const int TinyEye::size = 20;//Eye::size / (2*sqrtf(2.0f)+1);
+
+
+
+Sputum::Sputum(const Point& pos_, float speed, float angle, list<shared_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_)
+	:Bullet(pos_, size, speed, angle, enemies_, wall_, ground_)
+{
+	collider.add(Rect(Pos(), size));
+}
+
+bool Sputum::intersects() {
+
+	//for (const auto& enemy : enemies) {
+	//	if (collider.intersects(enemy->getCollider())) {
+	//		if (!enemy->isDead() && !enemy->isAssimilating()) {
+	//			//enemy->kill();
+	//		}
+	//	}
+	//}
+
+	//if (collider.intersects(ground)) true;
+
+	//for (const auto& arr : wall.getChips()) {
+	//	for (const auto& chip : arr) {
+	//		if (chip.has_value() && collider.intersects(chip.value().getCollider())) count -= 2;
+	//	}
+	//}
+
+	//return count <= 0;
+	return false;
+}
+
+void Sputum::onTouch() {
+	/*const Vec2&& delta = -Velocity().normalized();
+	while (intersects()) {
+		move(delta);
+		collider.update();
+	}
+	explosion = std::make_unique<AnimationGIFStrategy>(explosionGIF, Pos(), 1.0, 0.5);
+	exploding = true;*/
+}
+
+void Sputum::update() {
+
+	move();
+	collider.update();
+
+	if (intersects() || isOutOfView()) onTouch();
+}
+
+void Sputum::draw() const {
+	Circle(Pos(), size / 2).draw(Palette::Yellow);
+}
+
+const int Sputum::size = 75;

@@ -13,6 +13,7 @@ Enemy::Enemy(int hp_, int speed_, const Point& pos_, Wall& wall_, Collider& grou
 	bottom(pos),
 	ground_y(700),
 	dead(false),
+	dead_t(0),
 	h_speed(speed_),
 	v_speed(0),
 	t(0),
@@ -60,21 +61,37 @@ EnemyManager::EnemyManager(Wall & wall_, Collider & ground_, pair<Collider&, Dam
 	timer.restart();
 }
 
+EnemyManager::~EnemyManager()
+{
+	enemies.clear();
+}
+
 void EnemyManager::generate()
 {
 	static int pre_s;
+	static int gen_num = 0;
+
 	if (timer.s() - pre_s > 2) {
 		pre_s = timer.s();
-		for (int i = 0; i < 4*(1+sinf(timer.ms()*PiF/30)); i++)
-			enemies.emplace_back(new Thumb({ 1500+i*Random<int>(1,10)*15, 100 }, wall, ground, fortress, *this));
+		gen_num += 0.001 * timer.s() * (1 + sinf(timer.ms()*PiF/30)) + 5;
 	}
 
+#ifdef _DEBUG
 	if (Input::KeyEnter.clicked) enemies.emplace_back(new Thumb({ 300, 100 }, wall, ground, fortress, *this));
+#endif
+
+	static int count = 0;
+	if (gen_num > 0 && count++ >= 20) {
+		gen_num--;
+		enemies.emplace_back(new Thumb({ 1500 + Random<int>(1,150), 100 }, wall, ground, fortress, *this));
+		count = 0;
+	}
 }
 
 void EnemyManager::update()
 {
-	generate();
+	//æ•µã®æ•°ãŒä¸€å®šæ•°ã‚ˆã‚Šå¤šã‘ã‚Œã°å¢—ã‚„ã•ãªã„	
+	if (enemies.size() < 25) generate();
 	
 	static int wait_t = 0;//wait_time;
 	if (!wait_queue.empty()) {
@@ -117,23 +134,23 @@ Thumb::Thumb(const Point& pos_, Wall& wall, Collider& ground, const std::pair<Co
 
 TouchedBlock Thumb::touchesOn() {
 	
-	//UŒ‚”»’è
+	//ï¿½Uï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	if (collider.intersects(fortress.first)) {
 		changeState(State::Attacking);
-		pos.x = fortress.first.getOne()->x + 200; //•â³
+		pos.x = fortress.first.getOne()->x + 200 + Random<int>(0, 10); //ï¿½â³
 		collider.update();
 		bottom.update();
 		return none;
 	}
 
 	if (climb_count >= 8) return none;
-	//•Ç‚Æ‚ÌÚG”»’è
+	//ï¿½Ç‚Æ‚ÌÚGï¿½ï¿½ï¿½ï¿½
 	auto& arr = wall.getChips();
 	for (int i = 0; i < arr.size(); i++) {
 		for (int j = 0; j < arr[i].size(); j++) {
-			//•Ç‚É“–‚½‚Á‚½
+			//ï¿½Ç‚É“ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 			if (arr[i][j].has_value() && collider.intersects(arr[i][j]->getCollider())) {
-				pos.x = arr[i][j].value().getPos().x + Chip::size; //•Ç‚É“–‚½‚Á‚½‚Æ‚«‚Ì•â³
+				pos.x = arr[i][j].value().getPos().x + Chip::size + Random<int>(0,10); //ï¿½Ç‚É“ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ‚ï¿½ï¿½Ì•â³
 				return TouchedBlock(in_place, i, j);
 			}
 		}
@@ -147,19 +164,19 @@ void Thumb::transit() {
 	if (touchPos.has_value()) {
 		const auto& arr = wall.getChips();
 		int row = touchPos->x, col = touchPos->y;
-		//“¯‰»
-		//ÚGƒuƒƒbƒN‚Ìã‚ÉƒuƒƒbƒN‚ª‚ ‚Á‚½
+		//ï¿½ï¿½ï¿½ï¿½
+		//ï¿½ÚGï¿½uï¿½ï¿½ï¿½bï¿½Nï¿½Ìï¿½Éƒuï¿½ï¿½ï¿½bï¿½Nï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		if (arr[row - 1][col].has_value()) {
 
 			changeState(Enemy::State::Assimilating);
-			//‘Oü‚ğŒ`¬
+			//ï¿½Oï¿½ï¿½ï¿½ï¿½`ï¿½ï¿½
 			auto new_front = arr[row][col].value().getPos().movedBy(2 * Chip::size - 10, 0);
 			if (new_front.x > manager.getFrontPos().x) {
 				manager.setFrontPos(new_front);
 				manager.setFrontCol(touchPos->y);
 			}
 		}
-		//“o‚é
+		//ï¿½oï¿½ï¿½
 		else {
 			changeState(Enemy::State::Climbing);
 			climb_count++;
@@ -174,10 +191,10 @@ void Thumb::goForward()
 {
 	v_speed += g;
 
-	pos.moveBy(-h_speed, v_speed);
-	if (isOnFloor()) { v_speed = 0; pos.y = ground_y - Thumb::size; } //•â³
+	pos.moveBy(bound ? -h_speed/2 : -h_speed, v_speed);
+	if (isOnFloor()) { v_speed = 0; pos.y = ground_y - Thumb::size; } //ï¿½â³
 	
-	//ƒAƒjƒ[ƒVƒ‡ƒ“
+	//ï¿½Aï¿½jï¿½ï¿½ï¿½[ï¿½Vï¿½ï¿½ï¿½ï¿½
 	if ((++t / anim_coef) >= 6) t = 0;
 
 	touchPos = touchesOn();
@@ -203,15 +220,15 @@ void Thumb::goBack()
 	v_speed += g;
 
 	pos.moveBy(h_speed, v_speed);
-	if (isOnFloor()) { v_speed = 0; pos.y = ground_y - Thumb::size; } //•â³
+	if (isOnFloor()) { v_speed = 0; pos.y = ground_y - Thumb::size; } //ï¿½â³
 
 	if ((++t / anim_coef) >= 6) t = 0;
 
 
-	int margin = 10; //‰æ‘œ‚ÌˆÊ’u‚Ì‚¸‚ê‚ğ•â³i‚µ‚å‚¤‚ª‚È‚¢‚ñ‚Å‚·j
+	int margin = 10; //ï¿½æ‘œï¿½ÌˆÊ’uï¿½Ì‚ï¿½ï¿½ï¿½ï¿½â³ï¿½iï¿½ï¿½ï¿½å‚¤ï¿½ï¿½ï¿½È‚ï¿½ï¿½ï¿½Å‚ï¿½ï¿½j
 
 	if (pos.x > manager.getFrontPos().x+margin) {
-		pos.x = manager.getFrontPos().x+margin;
+		pos.x = manager.getFrontPos().x+margin + Random<int>(0, 10);
 		changeState(State::Waiting);
 		manager.wait_queue.enqueue(this);
 	}
@@ -221,15 +238,15 @@ void Thumb::asslimilate()
 {
 	if ((++t / anim_coef) >= 14) {
 		t = 0;
-		dead = true;
+		toErase = true;
 		wall.extend(touchPos->x, touchPos->y+1);
 	}
 }
 
 void Thumb::climb()
 {
-	//•`‰æˆÊ’uclimb
-	static Vec2 tmpPos; //pos‚ÌVec2•\Œ»
+	//ï¿½`ï¿½ï¿½Ê’uclimb
+	static Vec2 tmpPos; //posï¿½ï¿½Vec2ï¿½\ï¿½ï¿½
 	static const Vec2 delta = Vec2(-Chip::size, -Chip::size) / double(12*anim_coef);
 
 	if (t == 0) {
@@ -237,7 +254,7 @@ void Thumb::climb()
 		climbPos = pos.movedBy(-Chip::size, -Chip::size);
 	}
 	else {
-		tmpPos += delta;
+		tmpPos += bound?delta/2:delta;
 		pos = tmpPos.asPoint();
 	}
 
@@ -254,7 +271,7 @@ void Thumb::attack()
 	if ((++t / anim_coef) * 1.5 >= 5) {
 		changeState(State::Forward);
 		fortress.second.damage(5);
-		pos.moveBy(-collider_space_diff - 1, 0); //ª‹’‚Ì”–‚¢”’l
+		pos.moveBy(-collider_space_diff - 1, 0); //ï¿½ï¿½ï¿½ï¿½ï¿½Ì”ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½l
 		collider.update();
 		bottom.update();
 	}
@@ -270,6 +287,11 @@ void Thumb::wait()
 }
 
 void Thumb::update() {
+
+	if (dead) {
+		if (++dead_t > 45) toErase = true;
+		return;
+	}
 
 	switch (state)
 	{
@@ -288,6 +310,12 @@ void Thumb::update() {
 }
 
 void Thumb::draw() const {
+
+	if (dead) {
+		TextureAsset(L"attack")(0, 0, size, size).draw(pos, Color(200,0,0));
+		return;
+	}
+
 
 	int index;
 

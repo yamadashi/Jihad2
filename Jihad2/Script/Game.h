@@ -39,6 +39,13 @@ private:
 	bool end;
 	int timeLimit; //•ª
 
+	bool pause;
+	enum class PauseChoices { Resume, BackToTile } pauseChoice;
+	Font pauseFont1;
+	Font pauseFont2;
+	std::array<String, 2> pauseChoiceStr;
+	HSV pauseChoiceColor;
+
 public:
 	Game();
 	~Game();

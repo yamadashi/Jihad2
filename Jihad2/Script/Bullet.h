@@ -47,6 +47,8 @@ public:
 	Bullet(const Point& pos_, const int size, const Vec2& v0, list<shared_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_);
 	Bullet(const Point& pos_, const int size, float speed, float angle, list<shared_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_);
 	virtual ~Bullet() = default;
+	vector<Point> getTrajectory() const;
+	virtual int Size() const = 0;
 };
 
 
@@ -63,10 +65,11 @@ protected:
 
 public:
 	Eye(const Point& pos_, float speed, float angle, list<shared_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_);
+	~Eye() = default;
 	void update() override;
 	void draw() const override;
-	vector<Point> getTrajectory() const;
 	static void setExplosionGIF(const FilePath& path) { explosionGIF.reset(path); }
+	int Size() const { return size; }
 
 	static const int size;
 };
@@ -75,20 +78,36 @@ public:
 class TinyEye : public Bullet {
 private:
 	bool intersects();
+	int count; //ê⁄êGâÒêî
 
 protected:
 	void onTouch() override;
 
 public:
 	TinyEye(const Point& pos_,const Vec2& v0, float speed, float agnle, list<shared_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_);
+	~TinyEye() = default;
 	void update() override;
 	void draw() const override;
+	int Size() const { return size; }
 
 	static const int size;
 };
 
 
 class Sputum final : public Bullet {
+private:
+	bool intersects();
+	enum class State { Injected, Spreading };
 
+protected:
+	void onTouch() override;
 
+public:
+	Sputum(const Point& pos_, float speed, float angle, list<shared_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_);
+	~Sputum() = default;
+	void update() override;
+	void draw() const override;
+	int Size() const { return size; }
+
+	static const int size;
 };

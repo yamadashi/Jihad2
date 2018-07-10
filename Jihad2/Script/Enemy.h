@@ -27,11 +27,13 @@ protected:
 	Collider bottom;
 	int ground_y; //地面の位置
 	bool dead; //死亡(ただし消去はしない)
+	int dead_t; //死亡後のタイムラグ
 	bool toErase; //消去する
 	int h_speed, v_speed;
 	static const int g;
 	int t; //描画用変数
 	int anim_coef; // アニメーション速度の係数
+	bool bound; //痰がかかっているかどうか
 	
 	bool isOnGround(); //地面に足がついているか
 	bool isOnFloor(); //地面(階段含む)に足がついているか
@@ -111,7 +113,7 @@ private:
 
 public:
 	EnemyManager(Wall& wall_, Collider& ground_, std::pair<Collider&, Damageable&> fortress_);
-	~EnemyManager() = default;
+	~EnemyManager();
 	void update();
 	void draw() const;
 

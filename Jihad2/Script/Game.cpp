@@ -9,12 +9,20 @@ Game::Game()
 	camera(),
 	bg(),
 	timer(true),
-	timeFont(25),
+	timeFont(27, L"Chiller"),
 	end(false),
-	timeLimit(5)
+	timeLimit(5),
+	pause(false),
+	pauseChoice(PauseChoices::Resume),
+	pauseFont1(40, L"Haettenschweiler"),
+	pauseFont2(30, L"Haettenschweiler"),
+	pauseChoiceColor(0,0,0)
 {
 	fortress.setEneies(enemyManager.getEnemies());
 	ground.add(Rect(-100, 700, 5000, 900));
+
+	pauseChoiceStr[0] = L"Resume";
+	pauseChoiceStr[1] = L"Back to title";
 }
 
 
@@ -25,7 +33,54 @@ Game::~Game()
 
 void Game::update()
 {
+	//ポーズ画面
+	if (pause) {
+		if (Input::KeyP.clicked) {
+			pause = false;
+			timer.resume();
+		}
+
+		static double t = -PiF / 0;
+		if (Input::KeyUp.clicked) {
+			pauseChoice = static_cast<PauseChoices>(static_cast<int>(pauseChoice) - 1);
+			t = 0;
+		}
+		else if (Input::KeyDown.clicked) {
+			pauseChoice = static_cast<PauseChoices>(static_cast<int>(pauseChoice) + 1);
+			t = 0;
+		}
+		else if (Input::KeyEnter.clicked) {
+			switch (pauseChoice)
+			{
+			case Game::PauseChoices::Resume:
+				pause = false;
+				timer.resume();
+				break;
+			case Game::PauseChoices::BackToTile:
+				changeScene(SceneName::Title);
+				break;
+			default:
+				break;
+			}
+		}
+		
+		//選択中の色
+		if ((t += 0.1) >= TwoPi) t = 0;
+		pauseChoiceColor.v = 0.5 * sinf(t) + 0.5;
+
+
+		return;
+	}
+
+
 	if (!end) {
+
+		if (Input::KeyP.clicked) {
+			pause = true;
+			timer.pause();
+			return;
+		}
+
 		if (timer.min() >= timeLimit || Input::KeyC.clicked) {
 			end = true;
 			m_data->cleared = true;
@@ -46,6 +101,7 @@ void Game::update()
 	else {
 		changeScene(SceneName::Result);
 	}
+
 }
 
 
@@ -59,7 +115,7 @@ void Game::draw() const
 		bg.drawGarakuta();
 		bg.drawSmoke();
 
-		ground.getOne()->draw();
+		TextureAsset(L"ground").scale(3.0).draw(ground.getOne()->pos.movedBy(-100, 0));
 		fortress.draw();
 		wall.draw();
 		enemyManager.draw();
@@ -67,7 +123,22 @@ void Game::draw() const
 		ymds::EventManager::get().draw();
 	}
 
-	timeFont(timeLimit-1 - timer.min(), L":", Pad(59 - (timer.s() % 60), { 2, L'0' })).drawAt(Window::Center().x, 20, Palette::Black);
+	timeFont(timeLimit-1 - timer.min(), L":", Pad(59 - (timer.s() % 60), { 2, L'0' })).drawAt(Window::Center().x, 30, Palette::Black);
+	
+
+	//ポーズ画面
+	if (pause) {
+		static const auto size = 0.6*Window::Size();
+		static const auto pos = Window::Center() - size / 2;
+		RoundRect(pos.x, pos.y, size.x, size.y, size.x/25).draw(Color(0, 100, 100, 150));
+
+		pauseFont1(L"paused").drawAt(Window::Center().movedBy(0, -170));
+		int index = static_cast<int>(pauseChoice);
+		for (auto i : step(0, 2)) {
+			const auto&& color = i == index ? Color(pauseChoiceColor) : Palette::Black;
+			pauseFont2(pauseChoiceStr[i]).drawAt(Window::Center().movedBy(0, i*100), color);
+		}
+	}
 }
 
 
