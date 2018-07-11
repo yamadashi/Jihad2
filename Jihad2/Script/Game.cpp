@@ -16,18 +16,23 @@ Game::Game()
 	pauseChoice(PauseChoices::Resume),
 	pauseFont1(40, L"Haettenschweiler"),
 	pauseFont2(30, L"Haettenschweiler"),
-	pauseChoiceColor(0,0,0)
+	pauseChoiceColor(0, 0, 0),
+	BGfilter(Image(1500, 800, Color(255,255,255,45)))
 {
 	fortress.setEneies(enemyManager.getEnemies());
-	ground.add(Rect(-100, 700, 5000, 900));
+	ground.add(Rect(-100, 700, 5100, 900));
 
 	pauseChoiceStr[0] = L"Resume";
 	pauseChoiceStr[1] = L"Back to title";
+
+	SoundAsset(L"Game").setLoop(true);
+	SoundAsset(L"Game").play(0.5ms);
 }
 
 
 Game::~Game()
 {
+	ymds::EventManager::get().releaseAllEvent();
 }
 
 
@@ -72,7 +77,7 @@ void Game::update()
 		return;
 	}
 
-
+	//ƒQ[ƒ€‚ÌƒƒCƒ“ˆ—
 	if (!end) {
 
 		if (Input::KeyP.clicked) {
@@ -99,6 +104,7 @@ void Game::update()
 		camera.update();
 	}
 	else {
+		SoundAsset(L"Game").stop(1.0ms);
 		changeScene(SceneName::Result);
 	}
 
@@ -114,6 +120,10 @@ void Game::draw() const
 		bg.drawCloud();
 		bg.drawGarakuta();
 		bg.drawSmoke();
+	}
+	BGfilter.draw();
+	{
+		const auto t = camera.createTransformer();
 
 		TextureAsset(L"ground").scale(3.0).draw(ground.getOne()->pos.movedBy(-100, 0));
 		fortress.draw();

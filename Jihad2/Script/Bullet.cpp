@@ -185,7 +185,8 @@ void TinyEye::draw() const
 	TextureAsset(L"tiny_eye").draw(Pos());
 }
 
-void TinyEye::onTouch() {
+void TinyEye::onTouch()
+{
 	kill();
 }
 
@@ -194,53 +195,107 @@ const int TinyEye::size = 20;//Eye::size / (2*sqrtf(2.0f)+1);
 
 
 Sputum::Sputum(const Point& pos_, float speed, float angle, list<shared_ptr<Enemy>>& enemies_, Wall& wall_, Collider& ground_)
-	:Bullet(pos_, size, speed, angle, enemies_, wall_, ground_)
+	:Bullet(pos_, size, speed, angle, enemies_, wall_, ground_),
+	intersection(Intersection::None)
 {
 	collider.add(Rect(Pos(), size));
 }
 
-bool Sputum::intersects() {
+Sputum::Intersection Sputum::intersects() {
 
-	//for (const auto& enemy : enemies) {
-	//	if (collider.intersects(enemy->getCollider())) {
-	//		if (!enemy->isDead() && !enemy->isAssimilating()) {
-	//			//enemy->kill();
-	//		}
-	//	}
-	//}
+	for (const auto& enemy : enemies) {
+		if (collider.intersects(enemy->getCollider())) enemy->bind();
+	}
 
-	//if (collider.intersects(ground)) true;
+	if (collider.intersects(ground)) return Intersection::Above;
 
-	//for (const auto& arr : wall.getChips()) {
-	//	for (const auto& chip : arr) {
-	//		if (chip.has_value() && collider.intersects(chip.value().getCollider())) count -= 2;
-	//	}
-	//}
+	for (const auto& arr : wall.getChips()) {
+		for (const auto& chip : arr) {
+			if (!chip.has_value() || !collider.intersects(chip.value().getCollider())) continue;
+	
+			if (Pos().x < wall.getChips().at(1).at(1)->getPos().x) return Intersection::OnLeft;
+			else return Intersection::Above;
+		}
+	}
 
-	//return count <= 0;
-	return false;
+	return Intersection::None;
 }
 
 void Sputum::onTouch() {
-	/*const Vec2&& delta = -Velocity().normalized();
-	while (intersects()) {
+	const Vec2&& delta = -Velocity().normalized();
+	while (intersects() != Intersection::None) {
 		move(delta);
 		collider.update();
 	}
-	explosion = std::make_unique<AnimationGIFStrategy>(explosionGIF, Pos(), 1.0, 0.5);
-	exploding = true;*/
+
+	switch (intersection)
+	{
+	case Sputum::Intersection::OnLeft:
+		scattering = true;
+		scatterAnimation = std::make_unique<LinkedImageStrategy>(L"Files/Image/scatterOnLeft.png", 80, Pos().movedBy(-size+8, 0), 2.0, 0.1);
+		break;
+	case Sputum::Intersection::Above:
+		scattering = true;
+		scatterAnimation = std::make_unique<LinkedImageStrategy>(L"Files/Image/scatterAbove.png", 80, Pos().movedBy(0, -size+8), 2.0, 0.1);
+		break;
+	default:
+		break;
+	}
 }
 
 void Sputum::update() {
 
-	move();
-	collider.update();
+	if (!scattering) {
+		move();
+		collider.update();
 
-	if (intersects() || isOutOfView()) onTouch();
+		if ((intersection = intersects()) != Intersection::None) onTouch();
+		else if (isOutOfView()) kill();
+	}
+	else {
+		if (scatterAnimation->update()) {
+			if (intersection == Intersection::Above) EventManager::get().registerEvent(new ScatteredSputum(Pos().movedBy(-0.6*size/2, -size+8), enemies));
+			kill();
+		}
+	}
+	
 }
 
 void Sputum::draw() const {
-	Circle(Pos(), size / 2).draw(Palette::Yellow);
+
+	if (scattering) scatterAnimation->draw();
+	else {
+
+		auto angle = atan2(Velocity().y, Velocity().x);
+
+		if (abs(Velocity().y) < 5.0) TextureAsset(L"sputum")(0, 0, 80, 80).rotate(angle).draw(Pos());
+		else if (abs(Velocity().y) < 10.0) TextureAsset(L"sputum")(80, 0, 80, 80).rotate(angle).draw(Pos());
+		else TextureAsset(L"sputum")(160, 0, 80, 80).rotate(angle).draw(Pos());
+	}
 }
 
-const int Sputum::size = 75;
+const int Sputum::size = 80;
+
+
+ScatteredSputum::ScatteredSputum(const Point& pos_, list<shared_ptr<Enemy>>& enemies_)
+	:Event(),
+	pos(pos_),
+	collider(pos),
+	enemies(enemies_),
+	count(0),
+	limit(270)
+{
+	collider.add(Rect(pos.movedBy(0, 140), 150, 10));
+}
+
+void ScatteredSputum::update() {
+	for (const auto& enemy : enemies) {
+		if (collider.intersects(enemy->getCollider())) enemy->bind();
+	}
+	if (++count > limit) kill();
+}
+
+void ScatteredSputum::draw() const {
+	
+	TextureAsset(L"scatterAbove")(160, 0, 80, 80).scale(2.6, 2.0).draw(pos);
+}

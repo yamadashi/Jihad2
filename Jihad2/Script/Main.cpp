@@ -13,7 +13,8 @@ void Main()
 	Window::Resize(1500, 800);
 
 	FontManager::Register(L"Files/CHILLER.ttf");
-	TextureRegisterer().fileRegister(L"Files/").preload();
+	TextureRegisterer().fileRegister(L"Files/Image/").preload();
+	SoundRegisterer().fileRegister(L"Files/Sound/").preload();
 	
 	MySceneManager manager;
 	manager.add<Title>(SceneName::Title);
@@ -22,7 +23,7 @@ void Main()
 	manager.add<Tutorial>(SceneName::Tutorial);
 	manager.add<Result>(SceneName::Result);
 	
-	Eye::setExplosionGIF(L"Files/bullet/eye_exp.gif");
+	Eye::explosionGIF.reset(L"Files/Image/bullet/eye_exp.gif");
 
 	while (System::Update())
 	{

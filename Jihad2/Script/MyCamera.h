@@ -20,8 +20,8 @@ private:
 
 public:
 	MyCamera()
-		:BasicCamera2D(Window::Size()*0.5, 1.0),
-		m_targetPos(Window::Size()*0.5),
+		:BasicCamera2D({ 1900, 0.5*Window::Size().y }, 1.0),
+		m_targetPos(1900, 0.5*Window::Size().y),
 		m_targetScale(1.0)
 	{}
 
@@ -37,15 +37,15 @@ public:
 			m_targetScale *= scaleRatio;
 		}
 
-		if (Input::KeyS.pressed && m_targetScale > 0.33)
+		if (Input::KeyS.pressed && m_targetScale > 0.39)
 		{
 			m_targetScale /= scaleRatio;
 		}
 
 		//ƒJƒƒ‰”ÍˆÍ‚Ì¶‰E§ŒÀ
 		auto&& area = getCameraArea();
-		if ((int)area.x < 0) {
-			m_targetPos.x = (int)(Window::Width() * 0.5 / m_scale);
+		if ((int)area.x < 800) {
+			m_targetPos.x = (int)(Window::Width() * 0.5 / m_scale) + 800;
 		}
 		else if ((int)(area.x + area.w) > 4571) {
 			m_targetPos.x = (int)(Window::Width() * 0.5 / m_scale - area.w) + 4571;

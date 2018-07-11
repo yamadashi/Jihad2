@@ -9,6 +9,20 @@ using TouchedBlock = Optional<Point>;
 
 class EnemyManager;
 
+
+struct PointF {
+	PointF(float x_, float y_) : x(x_), y(y_) {}
+	PointF(const Point& point) : x((float)point.x), y((float)point.y) {}
+	PointF(const Vec2& vec) : x((float)vec.x), y((float)vec.y) {}
+	float x;
+	float y;
+	void moveBy(const Vec2& delta) { x += delta.x; y += delta.y; }
+	const Vec2&& movedBy(const Vec2& delta) const { return Vec2(x + delta.x, y + delta.y); }
+	const Vec2&& asVec2() { return Vec2(x, y); }
+	const Point&& asPoint() { return Point(x, y); }
+};
+
+
 class Enemy : public Damageable {
 public:
 	enum class State {
@@ -23,6 +37,7 @@ protected:
 
 	EnemyManager& manager;
 	Point pos;
+	PointF posF;
 	Collider collider;
 	Collider bottom;
 	int ground_y; //地面の位置
@@ -34,6 +49,8 @@ protected:
 	int t; //描画用変数
 	int anim_coef; // アニメーション速度の係数
 	bool bound; //痰がかかっているかどうか
+	int bound_t;
+	const int bound_limit;
 	
 	bool isOnGround(); //地面に足がついているか
 	bool isOnFloor(); //地面(階段含む)に足がついているか
@@ -54,6 +71,7 @@ public:
 	bool isToErase() { return toErase; }
 	bool isAssimilating() const { return state == State::Assimilating; }
 	void kill() { dead = true; }
+	void bind() { bound = true; bound_t = 0; }
 	void damage(int val) override { hp -= val; }
 	const Collider& getCollider() const { return collider; }
 	const State& getState() const { return state; }
@@ -91,6 +109,7 @@ public:
 	const TouchedBlock& getTouchPos() { return touchPos; }
 	void setClimbed(void) { hasClimbed = true; }
 	void transit();
+	static const int Size() { return size; }
 };
 
 

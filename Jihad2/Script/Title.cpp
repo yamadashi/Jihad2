@@ -1,7 +1,7 @@
 #include "Title.h"
 
 Title::Title()
-	:select(Select::Start),
+	:select(Select::None),
 	speed(3),
 	font(20),
 	logo_sub_handler(L"sub" + ToString(Random<int>(1,5))),
@@ -14,16 +14,27 @@ Title::Title()
 	text[1] = L"‚¹‚Â‚ß‚¢";
 	text[2] = L"‚¨‚í‚é";
 
+	SoundAsset(L"Title").setLoop(true);
+	SoundAsset(L"Title").play(0.3ms);
 }
 
 void Title::update()
 {
-	int val = static_cast<int>(select) + Input::KeyDown.clicked - Input::KeyUp.clicked;
-	select = static_cast<Select>((3 + val) % 3);
-	if (Input::KeyEnter.clicked) {
+	select = Select::None;
+	for (int i = 0; i < 3; i++) {
+		if (font(text[i]).regionCenter(Window::Center().movedBy(0, 150 + i * 50)).contains(Mouse::Pos()))
+			select = static_cast<Select>(i);
+	}
+
+	/*int val = static_cast<int>(select) + Input::KeyDown.clicked - Input::KeyUp.clicked;
+	select = static_cast<Select>((3 + val) % 3);*/
+	if (Input::MouseL.clicked) {
+
 		switch (select) {
-		case Select::Start: changeScene(SceneName::Game); break;
-		case Select::Explain: changeScene(SceneName::Explain); break;
+		case Select::Start:
+			changeScene(SceneName::Game);
+			SoundAsset(L"Title").stop(0.5ms);
+			break;
 		case Select::End: System::Exit();
 		}
 	}

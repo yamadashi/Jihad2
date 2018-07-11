@@ -7,7 +7,8 @@ private:
 	enum class Select {
 		Start,
 		Explain,
-		End
+		End,
+		None
 	} select;
 
 	std::array<String,3> text;

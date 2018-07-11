@@ -9,6 +9,7 @@ Enemy::Enemy(int hp_, int speed_, const Point& pos_, Wall& wall_, Collider& grou
 	fortress(fortress_),
 	manager(manager_),
 	pos(pos_),
+	posF(pos),
 	collider(pos),
 	bottom(pos),
 	ground_y(700),
@@ -17,7 +18,10 @@ Enemy::Enemy(int hp_, int speed_, const Point& pos_, Wall& wall_, Collider& grou
 	h_speed(speed_),
 	v_speed(0),
 	t(0),
-	anim_coef(6)
+	anim_coef(6),
+	bound(false),
+	bound_t(0),
+	bound_limit(180)
 {}
 
 bool Enemy::isOnGround() {
@@ -81,9 +85,9 @@ void EnemyManager::generate()
 #endif
 
 	static int count = 0;
-	if (gen_num > 0 && count++ >= 20) {
+	if (gen_num > 0 && count++ >= 30) {
 		gen_num--;
-		enemies.emplace_back(new Thumb({ 1500 + Random<int>(1,150), 100 }, wall, ground, fortress, *this));
+		enemies.emplace_back(new Thumb({ 4500 + Random<int>(1,150), 700-Thumb::Size() }, wall, ground, fortress, *this));
 		count = 0;
 	}
 }
@@ -138,6 +142,7 @@ TouchedBlock Thumb::touchesOn() {
 	if (collider.intersects(fortress.first)) {
 		changeState(State::Attacking);
 		pos.x = fortress.first.getOne()->x + 200 + Random<int>(0, 10); //�␳
+		posF.x = pos.x;
 		collider.update();
 		bottom.update();
 		return none;
@@ -150,7 +155,8 @@ TouchedBlock Thumb::touchesOn() {
 		for (int j = 0; j < arr[i].size(); j++) {
 			//�ǂɓ���������
 			if (arr[i][j].has_value() && collider.intersects(arr[i][j]->getCollider())) {
-				pos.x = arr[i][j].value().getPos().x + Chip::size + Random<int>(0,10); //�ǂɓ��������Ƃ��̕␳
+				pos.x = arr[i][j].value().getPos().x + Chip::size + Random<int>(0,7); //�ǂɓ��������Ƃ��̕
+				posF.x = pos.x;
 				return TouchedBlock(in_place, i, j);
 			}
 		}
@@ -191,8 +197,14 @@ void Thumb::goForward()
 {
 	v_speed += g;
 
-	pos.moveBy(bound ? -h_speed/2 : -h_speed, v_speed);
-	if (isOnFloor()) { v_speed = 0; pos.y = ground_y - Thumb::size; } //�␳
+	posF.moveBy({ bound ? -h_speed / 3.0 : -h_speed, v_speed });
+	pos.set(posF.x, posF.y);
+
+	if (isOnFloor()) {
+		v_speed = 0;
+		pos.y = ground_y - Thumb::size;
+		posF.y = pos.y;
+	}
 	
 	//�A�j���[�V����
 	if ((++t / anim_coef) >= 6) t = 0;
@@ -220,7 +232,11 @@ void Thumb::goBack()
 	v_speed += g;
 
 	pos.moveBy(h_speed, v_speed);
-	if (isOnFloor()) { v_speed = 0; pos.y = ground_y - Thumb::size; } //�␳
+	if (isOnFloor()) {
+		v_speed = 0;
+		pos.y = ground_y - Thumb::size;
+		posF.y = pos.y;
+	}
 
 	if ((++t / anim_coef) >= 6) t = 0;
 
@@ -228,7 +244,8 @@ void Thumb::goBack()
 	int margin = 10; //�摜�̈ʒu�̂����␳�i���傤���Ȃ���ł��j
 
 	if (pos.x > manager.getFrontPos().x+margin) {
-		pos.x = manager.getFrontPos().x+margin + Random<int>(0, 10);
+		pos.x = manager.getFrontPos().x+margin + Random<int>(0, 7);
+		posF.x = pos.x;
 		changeState(State::Waiting);
 		manager.wait_queue.enqueue(this);
 	}
@@ -239,28 +256,28 @@ void Thumb::asslimilate()
 	if ((++t / anim_coef) >= 14) {
 		t = 0;
 		toErase = true;
+		bound = false;
 		wall.extend(touchPos->x, touchPos->y+1);
 	}
 }
 
 void Thumb::climb()
 {
-	//�`��ʒuclimb
-	static Vec2 tmpPos; //pos��Vec2�\��
+
 	static const Vec2 delta = Vec2(-Chip::size, -Chip::size) / double(12*anim_coef);
 
 	if (t == 0) {
-		tmpPos.set(pos);
 		climbPos = pos.movedBy(-Chip::size, -Chip::size);
 	}
 	else {
-		tmpPos += bound?delta/2:delta;
-		pos = tmpPos.asPoint();
+		posF.moveBy(bound?delta/3:delta);
+		pos = posF.asPoint();
 	}
 
 	if ((++t / anim_coef) >= 12) {
 		changeState(State::Forward);
 		pos.set(climbPos);
+		posF.x = pos.x, posF.y = pos.y;
 		collider.update();
 		bottom.update();
 	}
@@ -268,7 +285,7 @@ void Thumb::climb()
 
 void Thumb::attack()
 {
-	if ((++t / anim_coef) * 1.5 >= 5) {
+	if ((++t / (bound?anim_coef*2:anim_coef)) * 1.5 >= 5) {
 		changeState(State::Forward);
 		fortress.second.damage(5);
 		pos.moveBy(-collider_space_diff - 1, 0); //�����̔������l
@@ -291,6 +308,9 @@ void Thumb::update() {
 	if (dead) {
 		if (++dead_t > 45) toErase = true;
 		return;
+	}
+	if (bound) {
+		if (++bound_t > bound_limit) bound = false;
 	}
 
 	switch (state)
@@ -316,18 +336,18 @@ void Thumb::draw() const {
 		return;
 	}
 
-
+	Color color = bound ? Palette::Yellow : Palette::White;
 	int index;
 
 	switch (state)
 	{
 	case Thumb::State::Forward:
 		index = t / anim_coef;
-		TextureAsset(L"walk")(index*size, 0, size, size).draw(pos);
+		TextureAsset(L"walk")(index*size, 0, size, size).draw(pos,color);
 		break;
 	case Thumb::State::Back:
 		index = t / anim_coef;
-		TextureAsset(L"walk")(index*size, 0, size, size).mirror().draw(pos);
+		TextureAsset(L"walk")(index*size, 0, size, size).mirror().draw(pos,color);
 		break;
 	case Thumb::State::Assimilating:
 		index = t / anim_coef;
@@ -335,17 +355,17 @@ void Thumb::draw() const {
 		break;
 	case Thumb::State::Climbing:
 		index = t / anim_coef;
-		TextureAsset(L"climb")((index % 6)*climb_size, (index / 6)*climb_size, climb_size, climb_size).draw(climbPos);
+		TextureAsset(L"climb")((index % 6)*climb_size, (index / 6)*climb_size, climb_size, climb_size).draw(climbPos,color);
 		break;
 	case Thumb::State::Attacking:
 		index = (int)((t / anim_coef) * 1.5);
-		TextureAsset(L"attack")((index % 5)*size, (index / 5)*size, size, size).draw(pos);
+		TextureAsset(L"attack")((index % 5)*size, (index / 5)*size, size, size).draw(pos,color);
 		break;
 	case Thumb::State::Waiting:
-		TextureAsset(L"wait").draw(pos);
+		TextureAsset(L"wait").draw(pos,color);
 		break;
 	case Thumb::State::None:
-		TextureAsset(L"wait").draw(pos);
+		TextureAsset(L"wait").draw(pos,color);
 		break;
 	default: break;
 	}

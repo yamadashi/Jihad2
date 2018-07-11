@@ -14,6 +14,7 @@ AnimationGIFStrategy::AnimationGIFStrategy(const AnimationGIFData& data, const P
 	t(0)
 {}
 
+//終了のタイミングでtrueを返す
 bool AnimationGIFStrategy::update() {
 	if (++t / speedCoeff >= data.size) return true;
 	else return false;

@@ -45,6 +45,7 @@ private:
 	Font pauseFont2;
 	std::array<String, 2> pauseChoiceStr;
 	HSV pauseChoiceColor;
+	Texture BGfilter; //”wŒi‚Ú‚©‚µ—p
 
 public:
 	Game();

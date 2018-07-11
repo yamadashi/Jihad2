@@ -4,12 +4,12 @@
 
 Fortress::Fortress(Wall& wall_, Collider& ground_)
 	:Damageable(100),
-	pos(50, 462),
+	pos(1300, 462),
 	angle(0),
 	angle_offset(-5*Pi/16),
 	max_angle(0.2), min_angle(-0.5),
-	rotation_point(80,195),
-	muzzle_offset(242, 470),
+	rotation_point(80,195), //relative
+	muzzle_offset(1492, 470),
 	muzzle_point(muzzle_offset),
 	rotation_velo(0.025),
 	collider(Point(pos)),
@@ -21,7 +21,7 @@ Fortress::Fortress(Wall& wall_, Collider& ground_)
 	fireReady(false),
 	charged(true),
 	charge_t(0),
-	charge_wait_time(480),
+	charge_wait_time(1200),
 	mouth_open(false),
 	wink_t(0),
 	update_func(&Fortress::normalUpdate),
@@ -57,7 +57,6 @@ void Fortress::rotate()
 
 	if (clicked && pressedKey->pressed)
 	{
-		Circle(clickPos, 6).draw(Palette::Orange);
 		const auto&& diff = Mouse::PosF() - clickPos;
 		const double length = diff.length();
 		if (length < 20.0) {
@@ -98,7 +97,6 @@ void Fortress::fire()
 			mouth_open = true;
 			update_func = &Fortress::resetUpdate;
 			fireReady = false;
-			charge_t = 0;
 		}
 
 		pressedKey = nullptr;
@@ -146,7 +144,6 @@ void Fortress::update()
 	
 	if (!charged) {
 		if ((wink_t / 7) < 3) wink_t++;
-		Println(wink_t/7);
 	}
 	else {
 		if ((wink_t / 7) > 0) wink_t--;
@@ -159,7 +156,7 @@ void Fortress::draw() const {
 	TextureAsset(charged ? L"eye_filled" : L"eye_empty").rotateAt(rotation_point, angle).draw(pos);
 	if (mouth_open) TextureAsset(L"open"+ToString(wink_t/7)).rotateAt(rotation_point, angle).draw(pos);
 	else TextureAsset(L"close"+ToString(wink_t/7)).rotateAt(rotation_point, angle).draw(pos);
-
+	PutText(angle).from(0, 0);
 	//‹O“¹‚ð•\Ž¦
 	if (fireReady && pressedKey != nullptr && pressedKey->pressed) {
 		for (const auto& elm : Eye(muzzle_point.asPoint(), power, angle + angle_offset, *enemies, wall, ground).getTrajectory()) {

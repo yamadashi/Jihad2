@@ -19,7 +19,7 @@ const int Chip::size = 75;
 
 
 Wall::Wall()
-	:stdPos(500, 100)
+	:stdPos(1950, 100)
 {
 	for (int i = 0; i < 10; i++) {
 		chips.emplace_back();

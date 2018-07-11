@@ -9,16 +9,6 @@
 using namespace std;
 
 
-struct PointF {
-	PointF(float x_, float y_) : x(x_), y(y_) {}
-	PointF(const Point& point) : x((float)point.x), y((float)point.y) {}
-	float x;
-	float y;
-	void moveBy(const Vec2& delta) { x += delta.x; y += delta.y; }
-	const Vec2&& movedBy(const Vec2& delta) const { return Vec2(x + delta.x, y + delta.y); }
-	const Vec2&& asVec2() { return Vec2(x, y); }
-};
-
 
 class Bullet : public ymds::Event {
 private:
@@ -55,7 +45,6 @@ public:
 class Eye final : public Bullet {
 private:
 	static const float power; //‡yóÙéûÇÃê®Ç¢
-	static AnimationGIFData explosionGIF;
 	std::unique_ptr<AnimationGIFStrategy> explosion;
 	bool exploding;
 	void explode();
@@ -68,10 +57,10 @@ public:
 	~Eye() = default;
 	void update() override;
 	void draw() const override;
-	static void setExplosionGIF(const FilePath& path) { explosionGIF.reset(path); }
 	int Size() const { return size; }
 
 	static const int size;
+	static AnimationGIFData explosionGIF;
 };
 
 
@@ -96,8 +85,10 @@ public:
 
 class Sputum final : public Bullet {
 private:
-	bool intersects();
-	enum class State { Injected, Spreading };
+	enum class Intersection { OnLeft, Above, None } intersection;
+	Intersection intersects();
+	std::unique_ptr<LinkedImageStrategy> scatterAnimation;
+	bool scattering;
 
 protected:
 	void onTouch() override;
@@ -110,4 +101,21 @@ public:
 	int Size() const { return size; }
 
 	static const int size;
+};
+
+class ScatteredSputum: public ymds::Event {
+private:
+	const Point pos;
+	Collider collider;
+	list<shared_ptr<Enemy>>& enemies;
+	int count;
+	const int limit;
+
+public:
+	ScatteredSputum(const Point& pos_, list<shared_ptr<Enemy>>& enemies_);
+	~ScatteredSputum() = default;
+
+	void update() override;
+	void draw() const override;
+
 };
